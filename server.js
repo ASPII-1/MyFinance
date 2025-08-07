@@ -1,15 +1,14 @@
 import express from 'express';
 import path from 'path';
-const cors = require('cors');
-app.use(cors()); // Allow all origins (for development only)
-
+import cors from 'cors';
 import { fileURLToPath } from 'url';
 import mysql from 'mysql2/promise';
+import yahooFinance from 'yahoo-finance2';
 
-// Configuration
-const TIINGO_API_KEY = 'e23ab68945f617d484b43d9a6d2c57be3182f43b';
-const TIINGO_BASE_URL = 'https://api.tiingo.com/tiingo';
+const app = express();
+app.use(cors());
 
+// Database configuration
 const pool = mysql.createPool({
   host: 'localhost',
   user: 'root',
@@ -24,13 +23,11 @@ const pool = mysql.createPool({
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
-
-// Middleware (only declare once)
+// Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API Routes (only declare once)
+// API Routes
 
 // Portfolio Data
 app.get('/api/portfolio', async (req, res) => {
@@ -57,20 +54,15 @@ app.get('/api/stocks', async (req, res) => {
 
 app.post('/api/stocks', async (req, res) => {
   try {
-    const { symbol, name, shares, avg_price, current_price } = req.body;
-    console.log(req.body);
+    const { symbol, name, shares, avg_price, current_price, sector } = req.body;
     const [result] = await pool.query(
-      'INSERT INTO stocks (symbol, name, shares, avg_price, current_price) VALUES (?, ?, ?, ?, ?)',
-      [symbol, name, shares, avg_price, current_price]
+      'INSERT INTO stocks (symbol, name, shares, avg_price, current_price, sector) VALUES (?, ?, ?, ?, ?, ?)',
+      [symbol, name, shares, avg_price, current_price, sector]
     );
-    res.status(201).json({ 
-      id: result.insertId, 
-      symbol, 
-      name,
-      shares, 
-      avg_price, 
-      current_price 
-    });
+    
+    // Return the inserted stock with proper database field names
+    const [newStock] = await pool.query('SELECT * FROM stocks WHERE id = ?', [result.insertId]);
+    res.status(201).json(newStock[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Database error' });
@@ -80,12 +72,15 @@ app.post('/api/stocks', async (req, res) => {
 app.put('/api/stocks/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { symbol, name, shares, avg_price, current_price } = req.body;
+    const { symbol, name, shares, avg_price, current_price, sector } = req.body;
     await pool.query(
-      'UPDATE stocks SET symbol = ?, name = ?, shares = ?, avg_price = ?, current_price = ? WHERE id = ?',
-      [symbol, name, shares, avg_price, current_price, id]
+      'UPDATE stocks SET symbol = ?, name = ?, shares = ?, avg_price = ?, current_price = ?, sector = ? WHERE id = ?',
+      [symbol, name, shares, avg_price, current_price, sector, id]
     );
-    res.json({ id, symbol, name, shares, avg_price, current_price });
+    
+    // Return the updated stock with proper database field names
+    const [updatedStock] = await pool.query('SELECT * FROM stocks WHERE id = ?', [id]);
+    res.json(updatedStock[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Database error' });
@@ -103,62 +98,6 @@ app.delete('/api/stocks/:id', async (req, res) => {
   }
 });
 
-// Tiingo Integration
-app.get('/api/search-stocks', async (req, res) => {
-  try {
-       const { query } = req.query;
-    const response = await fetch(
-      `${TIINGO_BASE_URL}/utilities/search/${query}?token=${TIINGO_API_KEY}`
-    );
-    const data = await response.json();
-    console.log(data);
-    res.json(data);
-
-  } catch (err) {
-    console.error('Tiingo search error:', err);
-    res.status(500).json({ error: 'Failed to search stocks' });
-  }
-});
-
-import fetch from 'node-fetch'; // Needed if using Node.js < 18
-
-app.get('/api/stock-price/:ticker', async (req, res) => {
-  try {
-    const { ticker } = req.params;
-    if (!ticker) {
-      return res.status(400).json({ error: 'Ticker is required' });
-    }
-
-    console.log("Fetching price for:", ticker);
-
-    const TIINGO_API_KEY = process.env.TIINGO_API_KEY;
-    const url = `https://api.tiingo.com/iex/${ticker}?token=e23ab68945f617d484b43d9a6d2c57be3182f43b`;
-
-    const response = await fetch(url);
-    const data = await response.json();
-
-    // Debug log
-    console.log("Tiingo response:", data);
-
-    if (Array.isArray(data) && data.length > 0) {
-      const stock = data[0];
-
-      res.json({
-        ticker: stock.ticker,
-        tngoLast: stock.tngoLast,
-        last: stock.last,
-        timestamp: stock.timestamp
-      });
-    } else {
-      res.status(404).json({ error: 'No price data found for this ticker' });
-    }
-
-  } catch (err) {
-    console.error('Tiingo live price error:', err);
-    res.status(500).json({ error: 'Failed to fetch stock price' });
-  }
-});
-
 // Funds CRUD
 app.get('/api/funds', async (req, res) => {
   try {
@@ -172,18 +111,15 @@ app.get('/api/funds', async (req, res) => {
 
 app.post('/api/funds', async (req, res) => {
   try {
-    const { name, units, avgNav, currentNav } = req.body;
+    const { name, units, avg_nav, current_nav, fund_category } = req.body;
     const [result] = await pool.query(
-      'INSERT INTO funds (name, units, avg_nav, current_nav) VALUES (?, ?, ?, ?)',
-      [name, units, avgNav, currentNav]
+      'INSERT INTO funds (name, units, avg_nav, current_nav, fund_category) VALUES (?, ?, ?, ?, ?)',
+      [name, units, avg_nav, current_nav, fund_category]
     );
-    res.status(201).json({ 
-      id: result.insertId, 
-      name, 
-      units, 
-      avgNav, 
-      currentNav 
-    });
+    
+    // Return the inserted fund with proper database field names
+    const [newFund] = await pool.query('SELECT * FROM funds WHERE id = ?', [result.insertId]);
+    res.status(201).json(newFund[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Database error' });
@@ -193,12 +129,15 @@ app.post('/api/funds', async (req, res) => {
 app.put('/api/funds/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, units, avgNav, currentNav } = req.body;
+    const { name, units, avg_nav, current_nav, fund_category } = req.body;
     await pool.query(
-      'UPDATE funds SET name = ?, units = ?, avg_nav = ?, current_nav = ? WHERE id = ?',
-      [name, units, avgNav, currentNav, id]
+      'UPDATE funds SET name = ?, units = ?, avg_nav = ?, current_nav = ?, fund_category = ? WHERE id = ?',
+      [name, units, avg_nav, current_nav, fund_category, id]
     );
-    res.json({ id, name, units, avgNav, currentNav });
+    
+    // Return the updated fund with proper database field names
+    const [updatedFund] = await pool.query('SELECT * FROM funds WHERE id = ?', [id]);
+    res.json(updatedFund[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Database error' });
@@ -216,12 +155,135 @@ app.delete('/api/funds/:id', async (req, res) => {
   }
 });
 
+// Yahoo Finance Integration
+app.get('/api/search', async (req, res) => {
+  try {
+    const { query, type = 'all' } = req.query;
+    if (!query) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+
+    const searchResults = await yahooFinance.search(query);
+    
+    // Filter results based on type
+    let filteredResults = [];
+    if (type === 'stock') {
+      filteredResults = searchResults.quotes.filter(
+        item => item.quoteType === 'EQUITY'
+      );
+    } else if (type === 'fund') {
+      filteredResults = searchResults.quotes.filter(
+        item => item.quoteType === 'MUTUALFUND'
+      );
+    } else {
+      filteredResults = searchResults.quotes.filter(
+        item => ['EQUITY', 'MUTUALFUND'].includes(item.quoteType)
+      );
+    }
+
+    res.json(filteredResults.map(item => ({
+      symbol: item.symbol,
+      name: item.longname || item.shortname,
+      type: item.quoteType === 'MUTUALFUND' ? 'fund' : 'stock',
+      exchange: item.exchDisp
+    })));
+
+  } catch (err) {
+    console.error('Yahoo Finance search error:', err);
+    res.status(500).json({ error: 'Failed to search' });
+  }
+});
+
+app.get('/api/quote/:symbol', async (req, res) => {
+  try {
+    const { symbol } = req.params;
+   
+    if (!symbol) {
+      return res.status(400).json({ error: 'Symbol is required' });
+    }
+
+    const quote = await yahooFinance.quote(symbol);
+    
+    const response = {
+      symbol: quote.symbol,
+      name: quote.longName || quote.shortName,
+      currency: quote.currency,
+      exchange: quote.exchangeName || quote.fullExchangeName,
+      timestamp: quote.regularMarketTime
+    };
+     const result = await yahooFinance.quoteSummary(quote.symbol, { modules: ['assetProfile'] });
+    const sectors1 = result.assetProfile?.sector;
+    console.log(sectors1);
+    console.log(quote.symbol);
+
+    // Add type-specific data
+    if (quote.quoteType === 'EQUITY') {
+      response.price = quote.regularMarketPrice;
+      response.change = quote.regularMarketChange;
+      response.changePercent = quote.regularMarketChangePercent;
+      response.sector = sectors1 || 'N/A';
+    } else if (quote.quoteType === 'MUTUALFUND') {
+      response.nav = quote.navPrice || quote.regularMarketPrice;
+      response.change = quote.regularMarketChange;
+      response.changePercent = quote.regularMarketChangePercent;
+      response.fund_category = quote.category || 'N/A';
+    }
+
+    res.json(response);
+
+  } catch (err) {
+    console.error('Yahoo Finance quote error:', err);
+    res.status(500).json({ error: 'Failed to fetch quote' });
+  }
+});
+
+// Top/Bottom Performing Funds
+app.get('/api/funds/performance', async (req, res) => {
+  try {
+    const [funds] = await pool.query(`
+      SELECT *, 
+        (current_nav - avg_nav) / avg_nav * 100 as performance 
+      FROM funds 
+      WHERE avg_nav > 0
+      ORDER BY performance DESC
+    `);
+    
+    const topPerformers = funds.slice(0, 5);
+    const bottomPerformers = funds.slice(-5).reverse();
+    
+    res.json({ topPerformers, bottomPerformers });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// Stock Sector Allocation
+app.get('/api/stocks/sectors', async (req, res) => {
+  try {
+    const [sectors] = await pool.query(`
+      SELECT 
+        COALESCE(sector, 'Unknown') as sector,
+        SUM(shares * current_price) as total_value,
+        COUNT(*) as stock_count
+      FROM stocks
+      GROUP BY sector
+      ORDER BY total_value DESC
+    `);
+    
+    res.json(sectors);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
 // Serve frontend
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Only one server instance (use either 3000 or 3001)
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
