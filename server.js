@@ -27,7 +27,6 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API Routes
 
 // Portfolio Data
 app.get('/api/portfolio', async (req, res) => {
@@ -40,6 +39,7 @@ app.get('/api/portfolio', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
+
 
 // Stocks CRUD
 app.get('/api/stocks', async (req, res) => {
@@ -280,11 +280,11 @@ app.get('/api/stocks/sectors', async (req, res) => {
 
 // Serve frontend
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
 
 // Start server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

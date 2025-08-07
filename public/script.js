@@ -71,7 +71,8 @@ function updateStocksTable() {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>
-                <a href="https://finance.yahoo.com/quote/${encodeURIComponent(stock.symbol)}" target="_blank">
+                <!-- Updated link with stock name parameter -->
+                <a href="http://localhost:3050/?symbol=${stock.symbol}&name=${encodeURIComponent(stock.name)}" target="_blank">
                     ${stock.symbol}
                 </a>
             </td>
@@ -100,7 +101,6 @@ function updateStocksTable() {
         });
     });
 }
-
 // Update funds table - FIXED UNDEFINED VALUES
 function updateFundsTable() {
     const tableBody = document.getElementById('funds-table-body');
