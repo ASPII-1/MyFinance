@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Financial Portfolio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+    <link rel="stylesheet" href="styles-high-contrast.css">
+    <style>
+        .stock-results-list {
+            cursor: pointer;
+        }
+        .stock-results-list li:hover {
+            background-color: #f8f9fa;
+        }
+        #stock-results {
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+        }
+        .list-group-item {
+            padding: 0.5rem 1rem;
+        }
+        .autocomplete-item {
+            cursor: pointer;
+            padding: 8px 12px;
+        }
+        .autocomplete-item:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="my-4">
+            <h1 class="text-center">My Financial Portfolio</h1>
+        </header>
+
+        <div class="row">
+            <!-- Summary Cards -->
+           <!-- Update the Summary Cards section -->
+            <div class="row">
+            <!-- Summary Cards -->
+            <div class="col-md-3 mb-4">
+                <div class="card summary-card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Portfolio Value</h5>
+                    <h2 class="card-value" id="total-value">$0.00</h2>
+                </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card summary-card">
+                <div class="card-body">
+                    <h5 class="card-title">Stocks Value</h5>
+                    <h2 class="card-value" id="stocks-value">$0.00</h2>
+                </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card summary-card">
+                <div class="card-body">
+                    <h5 class="card-title">Mutual Funds Value</h5>
+                    <h2 class="card-value" id="funds-value">$0.00</h2>
+                </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card summary-card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Profit/Loss</h5>
+                    <h2 class="card-value" id="total-profit-loss">$0.00</h2>
+                </div>
+                </div>
+            </div>
+            </div>
+        <!-- Portfolio Allocation Chart -->
+       <!-- Performance and Allocation Section -->
+        <div class="row mb-4">
+            <!-- Top Gainers -->
+            <div class="col-md-4 mb-4">
+                <div class="card chart-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Top Performing Stocks</h5>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Symbol</th>
+                                        <th>Gain</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="top-gainers">
+                                    <!-- Top gainers will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Top Losers -->
+            <div class="col-md-4 mb-4">
+                <div class="card chart-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Low Performing Stocks</h5>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Symbol</th>
+                                        <th>Loss</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="top-losers">
+                                    <!-- Top losers will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Portfolio Allocation -->
+            <div class="col-md-4 mb-4">
+                <div class="card chart-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Portfolio Allocation</h5>
+                        <canvas id="allocation-chart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stocks Section -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card data-card">
+                    <div class="card-body">
+                        <!-- Update the Stocks Investments table header -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">Stocks Investments</h5>
+                        <div class="d-flex">
+                            <div class="me-3">
+                            <small class="text-muted">Total Invested:</small>
+                            <span id="stocks-total-invested" class="fw-bold">$0.00</span>
+                            </div>
+                            <div class="me-3">
+                            <small class="text-muted">Current Value:</small>
+                            <span id="stocks-current-value" class="fw-bold">$0.00</span>
+                            </div>
+                            <div>
+                            <small class="text-muted">Net P/L:</small>
+                            <span id="stocks-net-pl" class="fw-bold">$0.00 (0.00%)</span>
+                            </div>
+                            <button class="btn btn-primary btn-add ms-3" data-bs-toggle="modal" data-bs-target="#addStockModal">
+                            Add Stock
+                            </button>
+                        </div>
+</div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-header">
+                                    <tr>
+                                        <th>Symbol</th>
+                                        <th>Name</th>
+                                        <th>shares</th>
+                                        <th>Avg Price</th>
+                                        <th>Current Price</th>
+                                        <th>Value</th>
+                                        <th>Gain/Loss</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stocks-table-body">
+                                    <!-- Stocks will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mutual Funds Section
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card data-card">
+                    <div class="card-body">
+                                                <!-- Update the Mutual Funds table header similarly -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">Mutual Funds</h5>
+                        <div class="d-flex">
+                            <div class="me-3">
+                            <small class="text-muted">Total Invested:</small>
+                            <span id="funds-total-invested" class="fw-bold">$0.00</span>
+                            </div>
+                            <div class="me-3">
+                            <small class="text-muted">Current Value:</small>
+                            <span id="funds-current-value" class="fw-bold">$0.00</span>
+                            </div>
+                            <div>
+                            <small class="text-muted">Net P/L:</small>
+                            <span id="funds-net-pl" class="fw-bold">$0.00 (0.00%)</span>
+                            </div>
+                            <button class="btn btn-primary btn-add ms-3" data-bs-toggle="modal" data-bs-target="#addFundModal">
+                            Add Fund
+                            </button>
+                        </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-header">
+                                    <tr>
+                                        <th>Fund Name</th>
+                                        <th>Units</th>
+                                        <th>Avg NAV</th>
+                                        <th>Current NAV</th>
+                                        <th>Value</th>
+                                        <th>Gain/Loss</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="funds-table-body">
+                                    <!-- Funds will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> 
+
+    <!-- Add Stock Modal with Tiingo Integration -->
+    <div class="modal fade" id="addStockModal" tabindex="-1" aria-labelledby="addStockModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addStockModalLabel">Add Stock Investment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-stock-form">
+                        <div class="mb-3">
+                           <label for="stock-search" class="form-label">Search Stock</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="stock-search" placeholder="Search for a stock...">
+                                <button class="btn btn-outline-secondary" type="button" id="search-stock-btn">Search</button>
+                            </div>
+                            <div id="stock-results" class="mt-2" style="max-height: 200px; overflow-y: auto; display: none;">
+                                <ul class="list-group stock-results-list"></ul>
+                            </div>
+
+                        </div>
+                        <div class="mb-3">
+                            <label for="stock-symbol" class="form-label">Stock Symbol</label>
+                            <input type="text" class="form-control" id="stock-symbol" required readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="stock-name" class="form-label">Stock Name</label>
+                            <input type="text" class="form-control" id="stock-name" required readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="stock-shares" class="form-label">Number of shares</label>
+                            <input type="number" step="0.0001" class="form-control" id="stock-shares" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="stock-avg-price" class="form-label">Average Purchase Price</label>
+                            <input type="number" step="0.01" class="form-control" id="stock-avg-price" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="stock-current-price" class="form-label">Current Price</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" class="form-control" id="stock-current-price" required>
+                                <button class="btn btn-outline-secondary" type="button" id="refresh-price-btn">Refresh</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="save-stock-btn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Fund Modal with Search (should replace your existing add fund modal) -->
+<div class="modal fade" id="addFundModal" tabindex="-1" aria-labelledby="addFundModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addFundModalLabel">Add Mutual Fund Investment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-fund-form">
+                    <div class="mb-3">
+                        <label for="fund-search" class="form-label">Search Mutual Fund</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="fund-search" placeholder="Search for a mutual fund...">
+                            <button class="btn btn-outline-secondary" type="button" id="search-fund-btn">Search</button>
+                        </div>
+                        <div id="fund-results" class="mt-2" style="max-height: 200px; overflow-y: auto; display: none;">
+                            <ul class="list-group fund-results-list"></ul>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fund-symbol" class="form-label">Fund Symbol</label>
+                        <input type="text" class="form-control" id="fund-symbol" required readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fund-name" class="form-label">Fund Name</label>
+                        <input type="text" class="form-control" id="fund-name" required readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fund-units" class="form-label">Number of Units</label>
+                        <input type="number" step="0.01" class="form-control" id="fund-units" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fund-avg-nav" class="form-label">Average Purchase NAV</label>
+                        <input type="number" step="0.01" class="form-control" id="fund-avg-nav" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fund-current-nav" class="form-label">Current NAV</label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" class="form-control" id="fund-current-nav" required>
+                            <button class="btn btn-outline-secondary" type="button" id="refresh-fund-nav-btn">Refresh</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="save-fund-btn">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+
+    <!-- Edit Stock Modal -->
+    <div class="modal fade" id="editStockModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Stock Investment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-stock-form">
+                        <input type="hidden" id="edit-stock-id">
+                        <div class="mb-3">
+                            <label for="edit-stock-symbol" class="form-label">Stock Symbol</label>
+                            <input type="text" class="form-control" id="edit-stock-symbol" required readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-stock-name" class="form-label">Stock Name</label>
+                            <input type="text" class="form-control" id="edit-stock-name" required readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-stock-shares" class="form-label">Number of shares</label>
+                            <input type="number" step="0.0001" class="form-control" id="edit-stock-shares" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-stock-avg-price" class="form-label">Average Purchase Price</label>
+                            <input type="number" step="0.01" class="form-control" id="edit-stock-avg-price" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-stock-current-price" class="form-label">Current Price</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" class="form-control" id="edit-stock-current-price" required>
+                                <button class="btn btn-outline-secondary" type="button" id="edit-refresh-price-btn">Refresh</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="update-stock-btn">Update</button>
+                    <button type="button" class="btn btn-danger" id="delete-stock-btn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Fund Modal -->
+    <div class="modal fade" id="editFundModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Mutual Fund Investment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-fund-form">
+                        <input type="hidden" id="edit-fund-id">
+                        <div class="mb-3">
+                            <label for="edit-fund-name" class="form-label">Fund Name</label>
+                            <input type="text" class="form-control" id="edit-fund-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-fund-units" class="form-label">Number of Units</label>
+                            <input type="number" step="0.01" class="form-control" id="edit-fund-units" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-fund-avg-nav" class="form-label">Average NAV</label>
+                            <input type="number" step="0.01" class="form-control" id="edit-fund-avg-nav" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-fund-current-nav" class="form-label">Current NAV</label>
+                            <input type="number" step="0.01" class="form-control" id="edit-fund-current-nav" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="update-fund-btn">Update</button>
+                    <button type="button" class="btn btn-danger" id="delete-fund-btn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
